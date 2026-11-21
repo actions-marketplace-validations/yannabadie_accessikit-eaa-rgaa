@@ -1,0 +1,45 @@
+name: "AccessiKit — EAA & RGAA v5 Accessibility Auditor"
+author: "Yann Abadie"
+description: "Audit HTML for 12 WCAG 2.1 AA / EAA / RGAA v5 accessibility rules (contrast, alt, labels, landmarks) — zero deps."
+
+branding:
+  icon: "eye"
+  color: "green"
+
+inputs:
+  target:
+    description: "HTML file or directory containing .html/.htm files to audit (default: '.')."
+    required: false
+    default: "."
+  report-output:
+    description: "Output path for structured JSON accessibility report."
+    required: false
+    default: "accessikit-report.json"
+  min-score:
+    description: "Minimum average score (0-100) required to pass CI (default: 75)."
+    required: false
+    default: "75"
+  fail-on-error:
+    description: "Exit with code 1 when score < min-score (true/false)."
+    required: false
+    default: "true"
+  max-depth:
+    description: "Maximum directory traversal depth for discovering HTML files."
+    required: false
+    default: "4"
+
+outputs:
+  report-path:
+    description: "Resolved path to the generated JSON accessibility report."
+  files-audited:
+    description: "Total number of HTML files audited."
+  average-score:
+    description: "Average accessibility score across all audited HTML files (0-100)."
+  rgaa-status:
+    description: "EAA / RGAA v5 status: totalement conforme, partiellement conforme, or non-conforme."
+  total-issues:
+    description: "Total count of accessibility violations detected across all files."
+
+runs:
+  using: "node20"
+  main: "src/audit.mjs"

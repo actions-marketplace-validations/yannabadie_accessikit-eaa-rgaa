@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AccessiKit — Audit EAA / RGAA v5 &amp; Générateur de Déclaration d'Accessibilité</title>
+  <meta name="description" content="Pré-auditez gratuitement votre HTML selon 12 critères WCAG 2.1 AA / EAA / RGAA v5 (100 % navigateur) et générez votre Déclaration d'Accessibilité conforme en Markdown ou HTML.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://yannabadie.github.io/accessikit-eaa-rgaa/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AccessiKit — Audit EAA &amp; RGAA v5 + Générateur de Déclaration d'Accessibilité">
+  <meta property="og:description" content="Outil gratuit 100 % local : 12 règles WCAG 2.1 AA / EAA / RGAA v5, score /100, GitHub Action MIT et générateur de Déclaration d'Accessibilité.">
+  <meta property="og:url" content="https://yannabadie.github.io/accessikit-eaa-rgaa/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "AccessiKit — EAA & RGAA v5 Accessibility Auditor & Declaration Generator",
+        "url": "https://yannabadie.github.io/accessikit-eaa-rgaa/",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "All (100% Browser Client-Side & GitHub Actions)",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+        "author": { "@type": "Person", "name": "Yann Abadie" }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Quelles entreprises sont soumises à l'EAA depuis le 28 juin 2025 ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Toutes les entreprises privées B2C (e-commerce, banque, transport, télécoms, billetterie, e-books) dépassant le seuil cumulatif micro-entreprise (10 salariés ou plus, OU chiffre d'affaires/bilan supérieur à 2 millions d'euros). Les contrôles DGCCRF sont actifs en 2026 avec des amendes jusqu'à 7 500 € par infraction cumulable."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Quelles sont les sanctions ARCOM sur le RGAA ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Pour les organismes publics et entreprises privées dépassant 250 M€ de CA en France, l'ARCOM peut prononcer jusqu'à 50 000 € d'amende par service numérique non conforme (renouvelable tous les 6 mois) et 25 000 € pour défaut de déclaration d'accessibilité ou de schéma pluriannuel."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --subtle: #F1F5F9;
+      --dark: #0F172A;
+      --ink: #0F172A;
+      --ink-2: #334155;
+      --muted: #475569;
+      --border: #CBD5E1;
+      --green: #047857;
+      --green-hover: #065F46;
+      --green-soft: #ECFDF5;
+      --green-border: #A7F3D0;
+      --blue: #1D4ED8;
+      --blue-hover: #1E40AF;
+      --amber: #92400E;
+      --amber-soft: #FFFBEB;
+      --amber-border: #FDE68A;
+      --rose: #991B1B;
+      --rose-soft: #FEF2F2;
+      --rose-border: #FECACA;
+      --radius: 14px;
+      --shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.55; overflow-x: hidden; }
+    a { color: var(--blue); text-underline-offset: 3px; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--subtle); padding: 1px 5px; border-radius: 5px; }
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+
+    .reg-bar { background: var(--dark); color: #F8FAFC; font-size: 0.83rem; padding: 9px 0; }
+    .reg-bar-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+    .reg-pill { color: #6EE7B7; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; }
+    .dot { width: 8px; height: 8px; border-radius: 99px; background: #10B981; display: inline-block; }
+
+    header { background: #FFFFFF; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 30; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; flex-wrap: wrap; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+    .brand-mark { width: 36px; height: 36px; border-radius: 10px; background: var(--green); color: #fff; font-weight: 800; font-family: var(--mono); font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; }
+    .brand-title { font-weight: 800; font-size: 0.98rem; display: block; line-height: 1.2; }
+    .brand-sub { font-size: 0.74rem; color: var(--muted); display: block; }
+    .nav-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .lang-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--subtle); }
+    .lang-btn { border: 0; background: transparent; padding: 5px 11px; font-weight: 700; font-size: 0.78rem; cursor: pointer; color: var(--ink-2); font-family: var(--sans); }
+    .lang-btn.active { background: var(--dark); color: #fff; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 15px; border-radius: 9px; font-weight: 700; font-size: 0.86rem;
+      border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+      text-decoration: none; cursor: pointer; font-family: var(--sans);
+    }
+    .btn-primary { background: var(--green); border-color: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-hover); border-color: var(--green-hover); color: #fff; }
+    .btn-blue { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .btn-blue:hover { background: var(--blue-hover); border-color: var(--blue-hover); color: #fff; }
+    .btn-dark { background: var(--dark); border-color: var(--dark); color: #fff; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .hero { padding: 36px 0 24px; }
+    .eyebrow {
+      display: inline-flex; font-family: var(--mono); font-size: 0.76rem; font-weight: 700;
+      color: var(--green); background: var(--green-soft); border: 1px solid var(--green-border);
+      padding: 4px 12px; border-radius: 999px; margin-bottom: 14px;
+    }
+    .hero h1 { font-size: clamp(1.85rem, 3.5vw, 2.65rem); line-height: 1.15; letter-spacing: -0.025em; margin: 0 0 12px; max-width: 24ch; }
+    .hero p { color: var(--ink-2); font-size: 1.02rem; max-width: 74ch; margin: 0 0 20px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .kpi strong { font-family: var(--mono); font-size: 1.12rem; display: block; margin-bottom: 3px; }
+    .kpi span { font-size: 0.8rem; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 20px; margin: 22px 0 36px; align-items: start; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+    .card h2 { margin: 0 0 6px; font-size: 1.18rem; }
+    .card-sub { margin: 0 0 14px; font-size: 0.87rem; color: var(--muted); }
+
+    label.field-label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--ink); margin: 10px 0 4px; }
+    input.text-input, select.text-input, textarea.code-input {
+      width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px;
+      font-family: var(--sans); font-size: 0.88rem; color: var(--ink); background: #FFFFFF;
+    }
+    textarea.code-input { font-family: var(--mono); font-size: 0.8rem; min-height: 220px; resize: vertical; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+
+    .score-box {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 15px 16px; border-radius: 12px; background: var(--subtle); border: 1px solid var(--border); margin-bottom: 14px;
+    }
+    .score-num { font-family: var(--mono); font-size: 2rem; font-weight: 800; line-height: 1; }
+    .pill { font-family: var(--mono); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    .pill-ok { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-border); }
+    .pill-warn { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber-border); }
+    .pill-err { background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose-border); }
+
+    .issues-list { display: flex; flex-direction: column; gap: 8px; max-height: 290px; overflow-y: auto; margin-bottom: 14px; }
+    .issue { padding: 10px 12px; border-radius: 9px; font-size: 0.83rem; border: 1px solid var(--border); }
+    .issue.crit { background: var(--rose-soft); border-color: var(--rose-border); color: var(--rose); }
+    .issue.maj { background: var(--amber-soft); border-color: var(--amber-border); color: var(--amber); }
+    .issue.ok { background: var(--green-soft); border-color: var(--green-border); color: var(--green); font-weight: 600; }
+
+    .decl-preview {
+      background: #0F172A; color: #E2E8F0; border-radius: 10px; padding: 14px;
+      font-family: var(--mono); font-size: 0.78rem; line-height: 1.48; max-height: 310px; overflow: auto; white-space: pre-wrap; margin: 12px 0;
+    }
+
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 18px 0 38px; }
+    .price-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); }
+    .price-card.featured { border: 2px solid var(--green); }
+    .price-tag { font-family: var(--mono); font-size: 0.73rem; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+    .price-amount { font-family: var(--mono); font-size: 1.85rem; font-weight: 800; margin: 8px 0; }
+    .price-amount span { font-size: 0.82rem; font-weight: 500; color: var(--muted); }
+    .price-list { list-style: none; padding: 0; margin: 12px 0 18px; display: flex; flex-direction: column; gap: 7px; font-size: 0.86rem; color: var(--ink-2); }
+
+    footer { background: var(--dark); color: #CBD5E1; padding: 28px 0; font-size: 0.84rem; margin-top: 24px; }
+    .footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; align-items: center; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 16px; }
+    .footer-links a { color: #F8FAFC; }
+
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-2, .pricing-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) { .kpi-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="reg-bar">
+    <div class="container reg-bar-inner">
+      <span class="reg-pill"><span class="dot" aria-hidden="true"></span><span data-i18n="bar_1">EAA EN VIGUEUR depuis le 28 juin 2025 (contrôles DGCCRF actifs 2026)</span></span>
+      <span data-i18n="bar_2">RGAA v5 (WCAG 2.2) : publication déc. 2026 • Sanctions DGCCRF 7 500 € / ARCOM 50 000 €</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="container nav-inner">
+      <a href="./" class="brand">
+        <span class="brand-mark" aria-hidden="true">A11Y</span>
+        <span>
+          <span class="brand-title">AccessiKit EAA / RGAA v5</span>
+          <span class="brand-sub" data-i18n="brand_sub">Audit WCAG 2.1 AA &amp; Déclaration d'Accessibilité (100 % local)</span>
+        </span>
+      </a>
+      <div class="nav-right">
+        <div class="lang-toggle" role="group" aria-label="Choix de langue">
+          <button type="button" class="lang-btn active" id="btn-fr">FR</button>
+          <button type="button" class="lang-btn" id="btn-en">EN</button>
+        </div>
+        <a class="btn" href="https://github.com/yannabadie/accessikit-eaa-rgaa" target="_blank" rel="noopener noreferrer">GitHub Action (MIT)</a>
+        <a class="btn btn-primary" href="#offres" data-i18n="nav_pro">Packs Pro EAA/RGAA →</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <span class="eyebrow" data-i18n="eyebrow">100 % NAVIGATEUR • ZÉRO ENVOI SERVEUR • 12 RÈGLES WCAG 2.1 AA / EAA / RGAA v5</span>
+      <h1 data-i18n="hero_h1">Pré-Audit Accessibilité EAA / RGAA v5 &amp; Générateur de Déclaration Officielle</h1>
+      <p data-i18n="hero_p">
+        L'<strong>European Accessibility Act (EAA)</strong> s'applique depuis le <strong>28 juin 2025</strong> aux sites e-commerce et services B2C (dès 10 salariés ou &gt; 2 M€ de CA), sous contrôle de la <strong>DGCCRF</strong> (7 500 €/infraction cumulable), tandis que l'<strong>ARCOM</strong> contrôle le <strong>RGAA</strong> (jusqu'à 50 000 € + 25 000 € pour défaut déclaratif). Testez votre HTML en local et générez votre Déclaration d'Accessibilité prête à publier.
+      </p>
+      <div class="kpi-grid">
+        <div class="kpi"><strong>28 juin 2025</strong><span data-i18n="kpi_1">Entrée en vigueur EAA B2C (e-commerce, banques, billetterie)</span></div>
+        <div class="kpi"><strong>7 500 € / 50 000 €</strong><span data-i18n="kpi_2">Plafonds sanctions DGCCRF (EAA cumulable) &amp; ARCOM (RGAA)</span></div>
+        <div class="kpi"><strong>RGAA v5 (Déc. 2026)</strong><span data-i18n="kpi_3">Alignement WCAG 2.2, points bloquants &amp; téléservice ARCOM</span></div>
+        <div class="kpi"><strong>12 contrôles CI</strong><span data-i18n="kpi_4">Zéro dépendance • Pré-audit automatique (~30–40 % des critères)</span></div>
+      </div>
+    </section>
+
+    <!-- Section 1: HTML Auditor -->
+    <section class="grid-2" aria-labelledby="auditor-heading">
+      <div class="card">
+        <h2 id="auditor-heading" data-i18n="s1_title">1. Pré-Auditeur HTML 12 Règles (100 % Local)</h2>
+        <p class="card-sub" data-i18n="s1_sub">Collez le code source HTML d'une page ou importez un fichier <code>.html</code> pour détecter immédiatement les points bloquants WCAG 2.1 AA / RGAA.</p>
+
+        <div class="toolbar">
+          <button type="button" class="btn" id="btn-demo-bad" data-i18n="btn_demo_bad">Charger exemple non conforme</button>
+          <button type="button" class="btn" id="btn-demo-ok" data-i18n="btn_demo_ok">Charger exemple 100/100</button>
+          <label class="btn" for="html-file-input" data-i18n="btn_file">Importer un fichier .html</label>
+          <input type="file" id="html-file-input" accept=".html,.htm" style="display:none;">
+        </div>
+
+        <label class="field-label" for="html-source-input" data-i18n="lbl_html">Code source HTML à auditer</label>
+        <textarea id="html-source-input" class="code-input" spellcheck="false" placeholder="<!DOCTYPE html><html lang='fr'>...</html>"></textarea>
+
+        <div class="toolbar" style="margin-top:12px;">
+          <button type="button" class="btn btn-primary" id="btn-run-audit" data-i18n="btn_audit">Lancer le pré-audit (12 règles) →</button>
+          <button type="button" class="btn" id="btn-dl-json" disabled data-i18n="btn_dl_json">⬇ Télécharger Rapport JSON</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="s2_title">2. Score Automatisé &amp; Points Bloquants</h2>
+        <p class="card-sub" data-i18n="s2_sub">Un pré-audit automatisé identifie les défauts structurels (~30–40 % du RGAA) et prépare l'audit manuel complet.</p>
+
+        <div class="score-box">
+          <div>
+            <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;" data-i18n="lbl_score">Score AccessiKit (12 règles)</div>
+            <div id="audit-score" class="score-num">—</div>
+          </div>
+          <span id="audit-status-pill" class="pill pill-ok" data-i18n="pill_ready">Prêt à auditer</span>
+        </div>
+
+        <div id="issues-container" class="issues-list" aria-live="polite">
+          <div class="issue" data-i18n="issues_empty">Cliquez sur « Charger exemple non conforme » ou collez votre HTML pour lancer l'analyse locale.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Official Accessibility Declaration Generator -->
+    <section class="grid-2" aria-labelledby="decl-heading">
+      <div class="card">
+        <h2 id="decl-heading" data-i18n="decl_title">3. Générateur de Déclaration d'Accessibilité (RGAA v5 / EAA)</h2>
+        <p class="card-sub" data-i18n="decl_sub">Complétez les champs ci-dessous pour générer instantanément votre page officielle de Déclaration d'Accessibilité (conforme au modèle DINUM / Loi 2005-102 &amp; EAA).</p>
+
+        <label class="field-label" for="decl-org" data-i18n="lbl_org">Nom de l'organisme / entreprise</label>
+        <input type="text" id="decl-org" class="text-input" value="Mon Entreprise SAS">
+
+        <label class="field-label" for="decl-url" data-i18n="lbl_url">URL du site ou service numérique</label>
+        <input type="url" id="decl-url" class="text-input" value="https://www.exemple-boutique.fr">
+
+        <label class="field-label" for="decl-status" data-i18n="lbl_status">État de conformité constaté</label>
+        <select id="decl-status" class="text-input">
+          <option value="non-conforme">Non conforme (sans audit complet ou score &lt; 50 %)</option>
+          <option value="partiellement conforme">Partiellement conforme (score &gt;= 50 % et &lt; 100 %)</option>
+          <option value="totalement conforme">Totalement conforme (100 % des critères applicables)</option>
+        </select>
+
+        <label class="field-label" for="decl-email" data-i18n="lbl_email">Email de contact accessibilité (retour d'information)</label>
+        <input type="email" id="decl-email" class="text-input" value="accessibilite@exemple-boutique.fr">
+
+        <label class="field-label" for="decl-ref" data-i18n="lbl_ref">Référentiel &amp; régime</label>
+        <select id="decl-ref" class="text-input">
+          <option value="RGAA 4.1.2 / préparation RGAA v5 (WCAG 2.2) + EAA (Directive UE 2019/882)">RGAA 4.1.2 / prép. RGAA v5 + EAA (E-commerce / PME B2C)</option>
+          <option value="RGAA 4.1.2 / RGAA v5 (Loi n° 2005-102 art. 47)">RGAA 4.1.2 / RGAA v5 (Secteur public &amp; CA &gt; 250 M€)</option>
+        </select>
+
+        <div class="toolbar" style="margin-top:14px;">
+          <button type="button" class="btn btn-primary" id="btn-gen-decl" data-i18n="btn_gen_decl">Mettre à jour la déclaration</button>
+          <button type="button" class="btn btn-blue" id="btn-dl-md" data-i18n="btn_dl_md">⬇ Télécharger Markdown (.md)</button>
+          <button type="button" class="btn" id="btn-dl-html" data-i18n="btn_dl_html">⬇ Télécharger HTML (.html)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="decl_preview_title">Aperçu de la Déclaration Générée</h2>
+        <p class="card-sub" data-i18n="decl_preview_sub">Inclut les mentions obligatoires : état de conformité, contact retour d'information, et voies de recours (Défenseur des droits / ARCOM / DGCCRF).</p>
+        <pre id="decl-output" class="decl-preview"></pre>
+      </div>
+    </section>
+
+    <!-- Pricing / Polar.sh & Stripe ready slots -->
+    <section id="offres" aria-labelledby="pricing-heading">
+      <h2 id="pricing-heading" style="font-size:1.45rem;margin:0 0 6px;" data-i18n="pricing_title">Kits Conformité EAA / RGAA v5 &amp; Monitoring Continu</h2>
+      <p style="color:var(--ink-2);margin:0 0 12px;max-width:74ch;" data-i18n="pricing_sub">Le pré-auditeur 12 règles, le générateur de déclaration et la GitHub Action sont gratuits (licence MIT). Passez aux offres Pro pour le kit complet Schéma Pluriannuel ou la surveillance mensuelle de vos parcours clients.</p>
+
+      <div class="pricing-grid">
+        <article class="price-card">
+          <div>
+            <div class="price-tag">OPEN SOURCE • MIT</div>
+            <h3>GitHub Action &amp; CLI</h3>
+            <div class="price-amount">0 € <span>/ à vie</span></div>
+            <ul class="price-list">
+              <li>✓ 12 contrôles WCAG 2.1 AA / EAA / RGAA v5 en CI</li>
+              <li>✓ Zéro dépendance npm • Résumé GitHub natif</li>
+              <li>✓ Générateur de déclaration d'accessibilité inclus</li>
+            </ul>
+          </div>
+          <a class="btn" href="https://github.com/yannabadie/accessikit-eaa-rgaa" target="_blank" rel="noopener noreferrer">Utiliser gratuitement sur GitHub →</a>
+        </article>
+
+        <article class="price-card featured">
+          <div>
+            <div class="price-tag">PACK PRO • PAIEMENT UNIQUE</div>
+            <h3>Audit Complet + Schéma Pluriannuel</h3>
+            <div class="price-amount">49 € <span>net • paiement unique</span></div>
+            <ul class="price-list">
+              <li>✓ Grille complète d'auto-audit 106 critères RGAA / WCAG 2.2 (Excel/Notion)</li>
+              <li>✓ Modèle de Schéma Pluriannuel (3 ans) &amp; Plan d'action annuel</li>
+              <li>✓ Guide correctifs Shopify / WooCommerce / PrestaShop (points bloquants)</li>
+              <li>✓ Kit réponse contrôle DGCCRF / ARCOM</li>
+            </ul>
+          </div>
+          <a class="btn btn-primary" href="https://github.com/yannabadie/accessikit-eaa-rgaa/issues/new?title=Pack%20Audit%20Complet%20%2B%20Schema%20Pluriannuel%20(49%20EUR)" target="_blank" rel="noopener noreferrer" data-checkout-slot="polar-eaa-pack-49">Obtenir le Pack Complet (49 €) →</a>
+        </article>
+
+        <article class="price-card">
+          <div>
+            <div class="price-tag">VEILLE CONTINUE • AGENCES &amp; E-COMMERCE</div>
+            <h3>Monitoring Mensuel EAA / RGAA</h3>
+            <div class="price-amount">29 € <span>/ mois • sans engagement</span></div>
+            <ul class="price-list">
+              <li>✓ Contrôle automatisé mensuel de vos pages clés &amp; tunnels panier</li>
+              <li>✓ Alerte immédiate sur nouvelle régression bloquante (alt, labels, contraste)</li>
+              <li>✓ Historique horodaté des rapports pour preuve de diligence continue</li>
+              <li>✓ Inclut le Pack Schéma Pluriannuel 49 €</li>
+            </ul>
+          </div>
+          <a class="btn btn-dark" href="https://github.com/yannabadie/accessikit-eaa-rgaa/issues/new?title=Monitoring%20Mensuel%20EAA%20RGAA%20(29%20EUR%2Fmois)" target="_blank" rel="noopener noreferrer" data-checkout-slot="polar-eaa-monitor-29">Activer le Monitoring (29 €/mois) →</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <div>
+        <strong>AccessiKit EAA / RGAA v5</strong> • Outil open-source MIT par Yann Abadie. Diagnostic technique automatisé (~30–40 % des critères) — ne remplace pas un audit manuel complet.
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/yannabadie/accessikit-eaa-rgaa" target="_blank" rel="noopener noreferrer">GitHub Repo</a>
+        <a href="https://yannabadie.github.io/facturkit-2027/" target="_blank" rel="noopener noreferrer">FacturKit 2027</a>
+        <a href="https://yannabadie.github.io/cra-sbom-guard/" target="_blank" rel="noopener noreferrer">CRA-SBOM-Guard</a>
+        <a href="https://yannabadie.github.io/ai-act-art50-guard/" target="_blank" rel="noopener noreferrer">AIActKit Art. 50</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // Ready-to-wire Polar.sh / Stripe checkout URLs (leave empty until live checkout is connected).
+    var CHECKOUT_MAP = {
+      "polar-eaa-pack-49": "",
+      "polar-eaa-monitor-29": ""
+    };
+    var slotLinks = document.querySelectorAll("a[data-checkout-slot]");
+    for (var s = 0; s < slotLinks.length; s++) {
+      var k = slotLinks[s].getAttribute("data-checkout-slot");
+      if (k && CHECKOUT_MAP[k]) slotLinks[s].setAttribute("href", CHECKOUT_MAP[k]);
+    }
+
+    var I18N = {
+      fr: {
+        bar_1: "EAA EN VIGUEUR depuis le 28 juin 2025 (contrôles DGCCRF actifs 2026)",
+        bar_2: "RGAA v5 (WCAG 2.2) : publication déc. 2026 • Sanctions DGCCRF 7 500 € / ARCOM 50 000 €",
+        brand_sub: "Audit WCAG 2.1 AA & Déclaration d'Accessibilité (100 % local)",
+        nav_pro: "Packs Pro EAA/RGAA →",
+        eyebrow: "100 % NAVIGATEUR • ZÉRO ENVOI SERVEUR • 12 RÈGLES WCAG 2.1 AA / EAA / RGAA v5",
+        hero_h1: "Pré-Audit Accessibilité EAA / RGAA v5 & Générateur de Déclaration Officielle",
+        hero_p: "L'<strong>European Accessibility Act (EAA)</strong> s'applique depuis le <strong>28 juin 2025</strong> aux sites e-commerce et services B2C (dès 10 salariés ou &gt; 2 M€ de CA), sous contrôle de la <strong>DGCCRF</strong> (7 500 €/infraction cumulable), tandis que l'<strong>ARCOM</strong> contrôle le <strong>RGAA</strong> (jusqu'à 50 000 € + 25 000 € pour défaut déclaratif). Testez votre HTML en local et générez votre Déclaration d'Accessibilité prête à publier.",
+        s1_title: "1. Pré-Auditeur HTML 12 Règles (100 % Local)",
+        s2_title: "2. Score Automatisé & Points Bloquants",
+        decl_title: "3. Générateur de Déclaration d'Accessibilité (RGAA v5 / EAA)",
+        btn_audit: "Lancer le pré-audit (12 règles) →"
+      },
+      en: {
+        bar_1: "EU EAA IN FORCE since 28 June 2025 (active French DGCCRF enforcement 2026)",
+        bar_2: "RGAA v5 (WCAG 2.2): Dec 2026 release • Fines DGCCRF €7,500 / ARCOM €50,000",
+        brand_sub: "WCAG 2.1 AA Auditor & Accessibility Statement Generator (100% Local)",
+        nav_pro: "EAA / RGAA Pro Packs →",
+        eyebrow: "100% BROWSER-SIDE • ZERO UPLOAD • 12 WCAG 2.1 AA / EAA / RGAA v5 RULES",
+        hero_h1: "EU EAA & French RGAA v5 Pre-Auditor + Official Accessibility Statement Generator",
+        hero_p: "The <strong>European Accessibility Act (EAA)</strong> has applied since <strong>28 June 2025</strong> to B2C e-commerce and services (&gt;= 10 staff or &gt; €2M turnover) under <strong>DGCCRF</strong> enforcement (€7,500/violation cumulative), alongside <strong>ARCOM RGAA</strong> fines (up to €50,000 + €25,000 missing statement). Audit any HTML locally and export a ready-to-publish Accessibility Declaration.",
+        s1_title: "1. 12-Rule HTML Pre-Auditor (100% Local)",
+        s2_title: "2. Automated Score & Blocking Issues",
+        decl_title: "3. Accessibility Declaration Generator (RGAA v5 / EAA)",
+        btn_audit: "Run 12-Rule Pre-Audit →"
+      }
+    };
+
+    var currentLang = "fr";
+    function switchLang(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      document.getElementById("btn-fr").classList.toggle("active", lang === "fr");
+      document.getElementById("btn-en").classList.toggle("active", lang === "en");
+      var d = I18N[lang];
+      var nodes = document.querySelectorAll("[data-i18n]");
+      for (var i = 0; i < nodes.length; i++) {
+        var key = nodes[i].getAttribute("data-i18n");
+        if (d[key]) nodes[i].innerHTML = d[key];
+      }
+      renderDeclaration();
+    }
+    document.getElementById("btn-fr").addEventListener("click", function () { switchLang("fr"); });
+    document.getElementById("btn-en").addEventListener("click", function () { switchLang("en"); });
+
+    var CRITERIA = [
+      { id: "html-lang", weight: 10, severity: "critical", ref: "WCAG 3.1.1 / RGAA 8.3" },
+      { id: "document-title", weight: 8, severity: "critical", ref: "WCAG 2.4.2 / RGAA 8.5" },
+      { id: "img-alt", weight: 12, severity: "critical", ref: "WCAG 1.1.1 / RGAA 1.1" },
+      { id: "heading-hierarchy", weight: 8, severity: "major", ref: "WCAG 1.3.1 / RGAA 9.1" },
+      { id: "form-labels", weight: 12, severity: "critical", ref: "WCAG 1.3.1 / RGAA 11.1" },
+      { id: "empty-links-buttons", weight: 10, severity: "critical", ref: "WCAG 2.4.4 / RGAA 6.2" },
+      { id: "main-landmark", weight: 8, severity: "major", ref: "WCAG 1.3.1 / RGAA 9.2" },
+      { id: "viewport-zoom", weight: 8, severity: "critical", ref: "WCAG 1.4.4 / RGAA 10.4" },
+      { id: "iframe-title", weight: 6, severity: "major", ref: "WCAG 4.1.2 / RGAA 2.1" },
+      { id: "duplicate-id", weight: 6, severity: "major", ref: "WCAG 4.1.1 / RGAA 8.2" },
+      { id: "table-headers", weight: 6, severity: "major", ref: "WCAG 1.3.1 / RGAA 5.4" },
+      { id: "inline-color-contrast", weight: 6, severity: "major", ref: "WCAG 1.4.3 / RGAA 3.2" }
+    ];
+
+    function parseHex(h) {
+      var m = String(h || "").trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+      if (!m) return null;
+      var s = m[1].length === 3 ? m[1][0] + m[1][0] + m[1][1] + m[1][1] + m[1][2] + m[1][2] : m[1];
+      return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)];
+    }
+    function contrastHex(fg, bg) {
+      var a = parseHex(fg), b = parseHex(bg);
+      if (!a || !b) return null;
+      function lum(rgb) {
+        var c = rgb.map(function (v) { var x = v / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); });
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      }
+      var l1 = lum(a), l2 = lum(b);
+      return Number(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)).toFixed(2));
+    }
+
+    function auditInBrowser(raw) {
+      var html = String(raw || "").replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style|template)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+      var issues = [];
+      var failed = {};
+      function fail(ruleId, msg) {
+        var meta = CRITERIA.find(function (c) { return c.id === ruleId; });
+        failed[ruleId] = true;
+        issues.push({ ruleId: ruleId, severity: meta.severity, ref: meta.ref, message: msg });
+      }
+      function getAttr(a, n) {
+        var m = a.match(new RegExp("(?:^|\\s)" + n + "\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))", "i"));
+        return m ? (m[1] || m[2] || m[3] || "").trim() : null;
+      }
+
+      var hm = html.match(/<html\b([^>]*)>/i);
+      if (!hm || !(getAttr(hm[1], "lang") || "").length) fail("html-lang", "Missing or empty <html lang> attribute.");
+      var tm = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+      if (!tm || !tm[1].trim()) fail("document-title", "Missing or empty <title> element.");
+
+      var reImg = /<img\b([^>]*)>/gi, m;
+      while ((m = reImg.exec(html)) !== null) {
+        if (!/\balt(?:\s*=|\s|$)/i.test(m[1]) && !/role\s*=\s*["'](presentation|none)["']/i.test(m[1])) {
+          fail("img-alt", "<img> missing alt attribute.");
+        }
+      }
+      var levels = [], reH = /<h([1-6])\b/gi;
+      while ((m = reH.exec(html)) !== null) levels.push(parseInt(m[1], 10));
+      if (!levels.length || levels.indexOf(1) === -1) fail("heading-hierarchy", "Missing primary <h1> heading.");
+      else {
+        for (var i = 1; i < levels.length; i++) {
+          if (levels[i] > levels[i - 1] + 1) { fail("heading-hierarchy", "Skipped heading level <h" + levels[i - 1] + "> to <h" + levels[i] + ">."); break; }
+        }
+      }
+
+      var labels = {};
+      var reL = /<label\b([^>]*)>/gi;
+      while ((m = reL.exec(html)) !== null) { var f = getAttr(m[1], "for"); if (f) labels[f] = true; }
+      var reF = /<(input|select|textarea)\b([^>]*)>/gi;
+      while ((m = reF.exec(html)) !== null) {
+        var t = (getAttr(m[2], "type") || "text").toLowerCase();
+        if (m[1].toLowerCase() === "input" && ["hidden", "submit", "button", "reset", "image"].indexOf(t) !== -1) continue;
+        var id = getAttr(m[2], "id");
+        if (!getAttr(m[2], "aria-label") && !getAttr(m[2], "aria-labelledby") && !(id && labels[id])) {
+          fail("form-labels", "<" + m[1].toLowerCase() + "> missing associated <label> or aria-label.");
+        }
+      }
+
+      var reInt = /<(a|button)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+      while ((m = reInt.exec(html)) !== null) {
+        if (m[1].toLowerCase() === "a" && !/\bhref\s*=/i.test(m[2])) continue;
+        var txt = m[3].replace(/<[^>]+>/g, "").trim();
+        if (!txt && !getAttr(m[2], "aria-label") && !/<img\b[^>]*\balt\s*=\s*["'][^"']+["']/i.test(m[3])) {
+          fail("empty-links-buttons", "Empty <" + m[1].toLowerCase() + "> without accessible label.");
+        }
+      }
+
+      if (!/<main\b/i.test(html) && !/role\s*=\s*["']main["']/i.test(html)) fail("main-landmark", "Missing <main> landmark.");
+      var reVp = /<meta\b([^>]*)>/gi;
+      while ((m = reVp.exec(html)) !== null) {
+        if ((getAttr(m[1], "name") || "").toLowerCase() === "viewport") {
+          var c = (getAttr(m[1], "content") || "").toLowerCase();
+          if (/user-scalable\s*=\s*(no|0)\b/.test(c) || /maximum-scale\s*=\s*1(?:\.0)?\b/.test(c)) {
+            fail("viewport-zoom", "Viewport restricts user zoom (user-scalable=no / maximum-scale=1).");
+          }
+        }
+      }
+      var reIf = /<iframe\b([^>]*)>/gi;
+      while ((m = reIf.exec(html)) !== null) {
+        if (!getAttr(m[1], "title")) fail("iframe-title", "<iframe> missing title attribute.");
+      }
+      var ids = {}, reId = /\sid\s*=\s*(?:"([^"]+)"|'([^']+)')/gi;
+      while ((m = reId.exec(html)) !== null) {
+        var idv = (m[1] || m[2] || "").trim();
+        ids[idv] = (ids[idv] || 0) + 1;
+        if (ids[idv] === 2) fail("duplicate-id", "Duplicate id=\"" + idv + "\" detected.");
+      }
+      var reTbl = /<table\b([^>]*)>([\s\S]*?)<\/table>/gi;
+      while ((m = reTbl.exec(html)) !== null) {
+        if (!/<th\b/i.test(m[2]) && !/<caption\b/i.test(m[2])) fail("table-headers", "Data <table> missing <th> or <caption>.");
+      }
+      var reSt = /\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+      while ((m = reSt.exec(html)) !== null) {
+        var st = m[1] || m[2] || "";
+        var fg = st.match(/(?:^|;)\s*color\s*:\s*(#[0-9a-f]{3,6})\b/i);
+        var bg = st.match(/(?:^|;)\s*background(?:-color)?\s*:\s*(#[0-9a-f]{3,6})\b/i);
+        if (fg && bg) {
+          var ratio = contrastHex(fg[1], bg[1]);
+          if (ratio !== null && ratio < 4.5) fail("inline-color-contrast", "Low inline contrast " + ratio + ":1 (" + fg[1] + " on " + bg[1] + ").");
+        }
+      }
+
+      var score = 0, crit = 0;
+      CRITERIA.forEach(function (c) {
+        if (!failed[c.id]) score += c.weight;
+        else if (c.severity === "critical") crit++;
+      });
+      var status = issues.length === 0 ? "totalement conforme" : (score >= 50 && crit < 3 ? "partiellement conforme" : "non-conforme");
+      return { score: score, status: status, issues: issues };
+    }
+
+    var lastReport = null;
+    function esc(s) { return String(s || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; }); }
+
+    function runUiAudit() {
+      var raw = document.getElementById("html-source-input").value.trim();
+      if (!raw) return;
+      var res = auditInBrowser(raw);
+      lastReport = { tool: "accessikit-eaa-rgaa-web@1.0.0", auditedAt: new Date().toISOString(), score: res.score, status: res.status, issues: res.issues };
+
+      document.getElementById("audit-score").textContent = res.score + " / 100";
+      var pill = document.getElementById("audit-status-pill");
+      pill.textContent = res.status;
+      pill.className = "pill " + (res.issues.length === 0 ? "pill-ok" : res.status === "non-conforme" ? "pill-err" : "pill-warn");
+      document.getElementById("decl-status").value = res.status;
+      renderDeclaration();
+
+      var box = document.getElementById("issues-container");
+      if (!res.issues.length) {
+        box.innerHTML = '<div class="issue ok">✓ 12/12 critères automatisés validés (0 point bloquant détecté).</div>';
+      } else {
+        box.innerHTML = res.issues.map(function (i) {
+          return '<div class="issue ' + (i.severity === "critical" ? "crit" : "maj") + '"><strong>' + esc(i.ruleId) + '</strong> (' + esc(i.ref) + ') — ' + esc(i.message) + '</div>';
+        }).join("");
+      }
+      document.getElementById("btn-dl-json").disabled = false;
+    }
+
+    document.getElementById("btn-run-audit").addEventListener("click", runUiAudit);
+    document.getElementById("btn-demo-bad").addEventListener("click", function () {
+      document.getElementById("html-source-input").value = '<html><head><meta name="viewport" content="width=device-width, user-scalable=no"></head><body><h3>Boutique</h3><img src="p.jpg"><input type="email" placeholder="Email"><a href="/panier"></a><p style="color:#BBBBBB;background:#FFFFFF;">Promo</p></body></html>';
+      runUiAudit();
+    });
+    document.getElementById("btn-demo-ok").addEventListener("click", function () {
+      document.getElementById("html-source-input").value = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Boutique Accessible</title></head><body><main><h1>Catalogue</h1><img src="p.jpg" alt="Sac en cuir noir"><label for="em">Email</label><input id="em" type="email"><button type="submit">Commander</button></main></body></html>';
+      runUiAudit();
+    });
+    document.getElementById("html-file-input").addEventListener("change", function (e) {
+      if (!e.target.files || !e.target.files[0]) return;
+      var reader = new FileReader();
+      reader.onload = function () { document.getElementById("html-source-input").value = String(reader.result || ""); runUiAudit(); };
+      reader.readAsText(e.target.files[0]);
+    });
+
+    function downloadFile(name, mime, content) {
+      var blob = new Blob([content], { type: mime });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+    document.getElementById("btn-dl-json").addEventListener("click", function () {
+      if (lastReport) downloadFile("accessikit-report.json", "application/json", JSON.stringify(lastReport, null, 2) + "\n");
+    });
+
+    function buildDeclarationMarkdown() {
+      var org = document.getElementById("decl-org").value.trim() || "Mon Entreprise";
+      var url = document.getElementById("decl-url").value.trim() || "https://example.com";
+      var status = document.getElementById("decl-status").value;
+      var email = document.getElementById("decl-email").value.trim() || "accessibilite@example.com";
+      var ref = document.getElementById("decl-ref").value;
+      var today = new Date().toISOString().slice(0, 10);
+
+      if (currentLang === "en") {
+        return "# Accessibility Statement — " + org + "\n\n" +
+          "**" + org + "** is committed to making its digital service accessible in accordance with the European Accessibility Act (Directive (EU) 2019/882) and Article 47 of French Law n° 2005-102.\n\n" +
+          "This accessibility statement applies to **" + url + "**.\n\n" +
+          "## Compliance Status\n\n" +
+          "The website **" + url + "** is **" + status + "** with **" + ref + "** (statement updated on " + today + ").\n\n" +
+          "## Feedback and Contact\n\n" +
+          "If you cannot access content or a service, please contact our accessibility team at **" + email + "** to be directed to an accessible alternative.\n\n" +
+          "## Enforcement Procedures\n\n" +
+          "If you report an accessibility defect and receive no satisfactory response, you may contact:\n" +
+          "- **Défenseur des droits** (https://formulaire.defenseurdesdroits.fr/)\n" +
+          "- **DGCCRF** (SignalConso — https://signal.conso.gouv.fr/) for private B2C EAA services\n" +
+          "- **ARCOM** (https://www.arcom.fr/) for public sector & RGAA obligations\n";
+      }
+      return "# Déclaration d'accessibilité — " + org + "\n\n" +
+        "**" + org + "** s'engage à rendre son site internet accessible conformément à l'article 47 de la loi n° 2005-102 du 11 février 2005 et à la directive européenne sur l'accessibilité (EAA — Directive (UE) 2019/882).\n\n" +
+        "Cette déclaration d'accessibilité s'applique au site **" + url + "**.\n\n" +
+        "## État de conformité\n\n" +
+        "Le site **" + url + "** est **" + status + "** avec le référentiel **" + ref + "** (déclaration établie le " + today + ").\n\n" +
+        "## Retour d'information et contact\n\n" +
+        "Si vous n'arrivez pas à accéder à un contenu ou à un service, vous pouvez contacter le responsable de **" + org + "** à l'adresse **" + email + "** pour être orienté vers une alternative accessible ou obtenir le contenu sous une autre forme.\n\n" +
+        "## Voies de recours\n\n" +
+        "Si vous constatez un défaut d'accessibilité vous empêchant d'accéder à un contenu ou une fonctionnalité du site et que vous ne parvenez pas à obtenir une réponse de notre part, vous êtes en droit de faire parvenir vos doléances :\n" +
+        "- Écrire un message au **Défenseur des droits** (https://formulaire.defenseurdesdroits.fr/)\n" +
+        "- Signaler un manquement EAA e-commerce à la **DGCCRF** via SignalConso (https://signal.conso.gouv.fr/)\n" +
+        "- Contacter l'**ARCOM** (https://www.arcom.fr/) pour les obligations relevant du RGAA\n";
+    }
+
+    function renderDeclaration() {
+      document.getElementById("decl-output").textContent = buildDeclarationMarkdown();
+    }
+    document.getElementById("btn-gen-decl").addEventListener("click", renderDeclaration);
+    ["decl-org", "decl-url", "decl-status", "decl-email", "decl-ref"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", renderDeclaration);
+      document.getElementById(id).addEventListener("change", renderDeclaration);
+    });
+    document.getElementById("btn-dl-md").addEventListener("click", function () {
+      downloadFile("declaration-accessibilite.md", "text/markdown;charset=utf-8", buildDeclarationMarkdown());
+    });
+    document.getElementById("btn-dl-html").addEventListener("click", function () {
+      var md = buildDeclarationMarkdown();
+      var htmlDoc = '<!DOCTYPE html><html lang="' + currentLang + '"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Déclaration d\'accessibilité</title></head><body><main><pre style="white-space:pre-wrap;font-family:sans-serif;max-width:74ch;margin:2rem auto;line-height:1.6;">' + esc(md) + '</pre></main></body></html>';
+      downloadFile("declaration-accessibilite.html", "text/html;charset=utf-8", htmlDoc);
+    });
+
+    renderDeclaration();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "name": "accessikit-eaa-rgaa",
+  "version": "1.0.0",
+  "description": "Zero-dependency EU EAA & French RGAA v5 / WCAG 2.1 AA HTML accessibility auditor (GitHub Action + CLI + Declaration Generator).",
+  "type": "module",
+  "main": "src/audit.mjs",
+  "bin": {
+    "accessikit": "./src/audit.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/audit.test.mjs",
+    "audit": "node src/audit.mjs"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "eaa",
+    "european-accessibility-act",
+    "rgaa",
+    "rgaa-v5",
+    "wcag",
+    "wcag-aa",
+    "github-action",
+    "regtech"
+  ],
+  "author": "Yann Abadie",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yannabadie/accessikit-eaa-rgaa.git"
+  },
+  "homepage": "https://yannabadie.github.io/accessikit-eaa-rgaa/",
+  "dependencies": {}
+}
