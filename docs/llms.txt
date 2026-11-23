@@ -1,0 +1,17 @@
+# AccessiKit — EU EAA & French RGAA v5 Accessibility Auditor
+
+> Zero-dependency GitHub Action, Node.js 20/22+ CLI, and 100 % client-side HTML Accessibility Auditor + Official EAA / French RGAA v5 Accessibility Declaration Generator (Directive (EU) 2019/882, in force since 28 June 2025).
+
+## Free Tools & GitHub Marketplace
+
+- [Browser-Side HTML Accessibility Auditor & RGAA Declaration Generator](https://yannabadie.github.io/accessikit-eaa-rgaa/): Runs 12 automated WCAG 2.1 AA / EAA / RGAA v5 checks locally in the browser with zero server upload.
+- [GitHub Marketplace Action (`yannabadie/accessikit-eaa-rgaa@v1.0.0`)](https://github.com/marketplace/actions/accessikit-eaa-rgaa-v5-accessibility-auditor): Structural accessibility CI gate for static HTML builds (`dist/`).
+- [XML Sitemap](https://yannabadie.github.io/accessikit-eaa-rgaa/sitemap.xml)
+
+## Companion EU Compliance Toolkits & Packs
+
+- [EU AI Act Art. 50, CRA & EAA / RGAA v5 — Practical Compliance Guide (PDF 43 p., 24 EUR)](https://yannabadi.gumroad.com/l/eu-compliance-2026-2027-guide)
+- [EU Digital Compliance Command Center 2026–2027 (Notion System, 29 EUR)](https://yannabadi.gumroad.com/l/eu-compliance-2026-2027-notion-pack)
+- [CRA-SBOM-Guard (EU Cyber Resilience Act Art. 14)](https://yannabadie.github.io/cra-sbom-guard/)
+- [AIActKit 2026 (EU AI Act Art. 50 Guard)](https://yannabadie.github.io/ai-act-art50-guard/)
+- [FacturKit 2027 (Factur-X 1.09.2 / EN 16931)](https://yannabadie.github.io/facturkit-2027/)
